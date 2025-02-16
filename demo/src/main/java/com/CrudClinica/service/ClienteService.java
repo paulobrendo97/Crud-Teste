@@ -1,34 +1,43 @@
 package com.CrudClinica.service;
 
-import com.CrudClinica.model.Cliente; //Representa a entidade Cliente.
-import com.CrudClinica.repository.ClienteRepository; //Interface que interage com o banco de dados.
-import org.springframework.stereotype.Service; // Marca a classe como um serviço do Spring (camada de negócio).
-import org.springframework.transaction.annotation.Transactional; //Garante que as operações no banco sejam executadas como uma transação.
+import com.CrudClinica.model.Cliente;
+import com.CrudClinica.repository.ClienteRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List; //Estruturas de dados utilizadas na busca de clientes.
-import java.util.Optional; //Estruturas de dados utilizadas na busca de clientes.
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
 
-@Service  // Define a classe como um serviço do Spring, permitindo que seja injetada em outras partes do sistema.
+@Service
 public class ClienteService {
     
-    private final ClienteRepository repository; // Declara o repositório que permitirá acesso ao banco de dados.
+    private final ClienteRepository repository;
 
     public ClienteService(ClienteRepository repository) {
-        this.repository = repository; // Construtor da classe, onde o repositório é injetado automaticamente pelo Spring.
+        this.repository = repository;
     }
 
     @Transactional
-    public Cliente cadastrarCliente(String cpf, String nome, String email, boolean especial) { //Método para cadastrar um cliente, que recebe CPF, nome, e-mail e a indicação se ele é especial.
+    public Cliente cadastrarCliente(String cpf, String nome, String email) {
+        // Verifica se o CPF já está cadastrado
         if (repository.findByCpf(cpf).isPresent()) {
             throw new RuntimeException("CPF já cadastrado!");
         }
+
+        // Vai gerar o número aleatorio para definir se o cliente é especial ou não
+        Random random = new Random();
+        int numero = random.nextInt(1000); 
+        boolean especial = numero > 500;
+
+        // Cria o cliente e define os valores
         Cliente cliente = new Cliente();
         cliente.setCpf(cpf);
         cliente.setNome(nome);
         cliente.setEmail(email);
-        cliente.setEspecial(especial);
+        cliente.setEspecial(especial); // Define como especial ou não
 
-        return repository.save(cliente); // Salva o cliente no banco de dados e retorna o objeto salvo.
+        return repository.save(cliente); // Salva o cliente no banco de dados
     }
 
     @Transactional
@@ -36,23 +45,30 @@ public class ClienteService {
         Cliente cliente = repository.findByCpf(cpf)
                 .orElseThrow(() -> new RuntimeException("Cliente não encontrado"));
 
-        cliente.setEmail(novoEmail);
+        // Impede a alteração do nome ou CPF
+        if (!cliente.getEmail().equals(novoEmail)) {
+            cliente.setEmail(novoEmail); // Atualiza somente o email
+        }
+
         return repository.save(cliente);
     }
 
-    public void excluirCliente(String cpf) {// Verifica se o cliente existe antes de tentar excluí-lo.
+    public void excluirCliente(String cpf) {
         if (!repository.existsById(cpf)) {
             throw new RuntimeException("Cliente não encontrado");
         }
         repository.deleteById(cpf);
     }
 
-    public Optional<Cliente> buscarPorCpf(String cpf) {//usca um cliente pelo CPF e retorna um Optional<Cliente>, que pode conter um valor ou estar vazio.
+    public Optional<Cliente> buscarPorCpf(String cpf) {
         return repository.findByCpf(cpf);
     }
 
-    public List<Cliente> listarTodos() {// Busca e retorna todos os clientes cadastrados no banco.
-        return repository.findAll();
+    public List<Cliente> listarTodos() {
+        return repository.findAll(); // Retorna todos os clientes
+    }
+
+    public List<Cliente> listarTodosEspeciais() {
+        return repository.findByEspecialTrue(); // Filtra clientes especiais
     }
 }
-
