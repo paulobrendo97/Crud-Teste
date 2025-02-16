@@ -19,9 +19,9 @@ public class ClienteController {
 
     // Cadastro de cliente
     @PostMapping
-    public ResponseEntity<Cliente> cadastrarCliente(@RequestParam String cpf, @RequestParam String nome, @RequestParam String email) {
-        Cliente cliente = service.cadastrarCliente(cpf, nome, email);
-        return ResponseEntity.ok(cliente);
+    public ResponseEntity<Cliente> cadastrarCliente(@RequestBody Cliente cliente) {
+        Cliente clienteCadastrado = service.cadastrarCliente(cliente.getCpf(), cliente.getNome(), cliente.getEmail());
+        return ResponseEntity.ok(clienteCadastrado);
     }
 
     // Atualização de e-mail
